@@ -2,6 +2,7 @@ import {Routes, Route} from 'react-router-dom'
 import {useState} from 'react'
 import Sidebar from './components/sidebar'
 import Overview from './pages/overview'
+import Expenses from './pages/expenses'
 
 import './App.css'
 
@@ -30,8 +31,7 @@ function App() {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<Overview />} />
-            
-            
+            <Route path="/expenses" element={<Expenses />} />
           </Routes>
         </main>
       </div>
