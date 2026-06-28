@@ -173,7 +173,25 @@ func expensesHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func withdrawalsHandler(w http.ResponseWriter, _ *http.Request) {
+	var user int = 0
+	rows, err := db.Query("SELECT id, cents, created_at FROM expenses WHERE user_id = ? AND type = ?",
+		user, "withdrawal")
+	if err != nil {
+		http.Error(w, "Query Failed", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
+	var results []transactionType
+	for rows.Next() {
+		var t transactionType
+		rows.Scan(&t.ID, &t.Cents, &t.CreatedAt)
+		results = append(results, t)
+	}
+	w.Header().Set("content-type", "application/json")
+	//stringres, _ := json.Marshal(results)
+	//fmt.Printf("%s\n", string(stringres))
+	json.NewEncoder(w).Encode(results)
 }
 
 func queryExpenses(user int) int64 {
@@ -204,9 +222,54 @@ func queryWithdrawals(user int) int64 {
 	}
 	return sum
 }
+func receiptHandler(w http.ResponseWriter, r *http.Request) {
+	var user int = 0
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		//invalid ID value in location
+		http.Error(w, "invalid ID", http.StatusNotFound)
+		return
+	}
+	var exists bool
+	err = db.QueryRow("SELECT EXISTS( SELECT 1 FROM expenses WHERE id = ? AND user_id = ? AND type = ?)",
+		id,
+		user,
+		"expense",
+	).Scan(&exists)
+	if err != nil {
+		fmt.Printf("%v", err)
+		http.Error(w, "query error", http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		fmt.Printf("Nothing found for entries: id: %d, user: %d, type: expense", id, user)
+		http.Error(w, "No Rows", http.StatusNotFound)
+		return
+	}
+	filename := fmt.Sprintf("exp_%d.*", id)
+	pattern := filepath.Join("./uploads", filename)
+
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		fmt.Printf("%v", err)
+		http.Error(w, "glob failure", http.StatusInternalServerError)
+		return
+	}
+	if len(matches) == 0 {
+		log.Printf("requested File: %s not found", pattern)
+		http.Error(w, "Target file does not exist", http.StatusNotFound)
+		return
+	}
+	if len(matches) > 1 {
+		log.Printf("requested File: %s has %d results", pattern, len(matches))
+		http.Error(w, "Ambiguous file matching", http.StatusInternalServerError)
+		return
+	}
+	http.ServeFile(w, r, matches[0])
+}
 
 func dbSetup() *sql.DB {
-	db, err := sql.Open("sqlite", "expenses.db")
+	db, err := sql.Open("sqlite", "/data/budgeter/expenses.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -232,10 +295,11 @@ var db *sql.DB
 func main() {
 	db = dbSetup()
 	defer db.Close()
-	http.HandleFunc("/api/overview", overviewHandler)
-	http.HandleFunc("/api/new", postHandler)
-	http.HandleFunc("/api/expenses", expensesHandler)
-	http.HandleFunc("/api/withdrawals", withdrawalsHandler)
-	fmt.Printf("Listening on localhost:8080\n")
+	http.HandleFunc("GET  /api/budget/overview", overviewHandler)
+	http.HandleFunc("POST /api/budget/transactions", postHandler)
+	http.HandleFunc("GET  /api/budget/expenses", expensesHandler)
+	http.HandleFunc("GET  /api/budget/expenses/{id}", receiptHandler)
+	http.HandleFunc("GET  /api/budget/withdrawals", withdrawalsHandler)
+	fmt.Printf("Listening on :8080\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

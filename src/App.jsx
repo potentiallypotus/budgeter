@@ -3,6 +3,7 @@ import {useState} from 'react'
 import Sidebar from './components/sidebar'
 import Overview from './pages/overview'
 import Expenses from './pages/expenses'
+import Withdrawals from './pages/withdrawals'
 
 import './App.css'
 
@@ -32,6 +33,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Overview />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/withdrawals" element={<Withdrawals />} />
           </Routes>
         </main>
       </div>

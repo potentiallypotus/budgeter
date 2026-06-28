@@ -14,6 +14,9 @@ function Sidebar({ isOpen }) {
                 <Link to="/expenses" className="px-3 py-2 rounded hover:bg-gray-100">
                     Expenses
                 </Link>
+                <Link to="/withdrawals" className="px-3 py-2 rounded hover:bg-gray-100">
+                    Withdrawals
+                </Link>
             </nav>
         </aside>
     )

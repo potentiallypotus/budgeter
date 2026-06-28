@@ -24,7 +24,7 @@ function Overview() {
             setLoading(true)
             setLoadError(null)
             try {
-                const res = await fetch('/api/overview')
+                const res = await fetch('/api/budget/overview')
                 if (!res.ok) throw new Error('Failed to load overview')
                 const data = await res.json()
                 setSpent(mToString(data.spent))
@@ -37,7 +37,7 @@ function Overview() {
             }
         }
         loadOverview()
-    }, [refreshKey ])
+    }, [ refreshKey ])
     const showOverview = () => {
         if (loadError) {
             return <div className="bg-red-400 text-gray-700">Failed to Load Overview</div>

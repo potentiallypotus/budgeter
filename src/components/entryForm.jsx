@@ -17,7 +17,7 @@ async function postEntry(type, amount, description, file) {
     description && data.append("description", description)
     file && data.append("file", file)
     
-    return await fetch("/api/new", {
+    return await fetch("/api/budget/transactions", {
         method: "POST",
         body: data,
     })
